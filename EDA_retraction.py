@@ -394,7 +394,7 @@ def main():
     df = create_citation_to_retraction_ratio(df)
     df = apply_transform_subject(df)
     
-    columns_to_analyze = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason', 'Author']
+    columns_to_analyze = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason', 'Author','Paywalled']
     for column in columns_to_analyze:
         plot_top_10(df, column)
     
