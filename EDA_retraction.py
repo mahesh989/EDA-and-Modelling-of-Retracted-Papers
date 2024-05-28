@@ -4,12 +4,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import re
 
 # Load the data
 file_path = './retractions35215.csv'
@@ -89,6 +86,7 @@ def plot_top_10(column):
     plt.ylabel('Frequency')
     plt.title(f'Top 10 Most Frequently Occurring Entries in {column}')
     plt.xticks(rotation=45, ha='right')
+    plt.savefig(f'top_10_{column}.png')
     plt.show()
 
 # Plot for each specified column
@@ -193,6 +191,7 @@ def display_network_graph(column_name, top_n=None, weighted_degree_thresh=1, dro
     edge_colors = range(len(G.edges()))
     nx.draw(G, with_labels=True, pos=pos, font_weight='bold', edge_color=normalized_edge_weights, width=normalized_edge_weights, edge_cmap=plt.cm.Reds, edge_vmin=0, edge_vmax=4, node_size=degs, node_color=degs, cmap=plt.cm.autumn)
     plt.title(f"Network of Co-occurring {column_name}")
+    plt.savefig(f'network_graph_{column_name}.png')
     plt.show()
 
 # Define the parameters for each column
@@ -207,8 +206,6 @@ params = {
 columns_to_analyze = ['Reason', 'Author', 'Subject', 'Country']
 for column in columns_to_analyze:
     display_network_graph(column, **params[column])
-    
-    
 
 '''
 #################################################
@@ -228,6 +225,7 @@ ax.set_xticklabels(retractions_by_paywalled.index, rotation=0)
 for i in range(len(retractions_by_paywalled)):
     ax.text(i, retractions_by_paywalled[i] + 5, str(retractions_by_paywalled[i]), ha='center', color='black')
 plt.grid(True)
+plt.savefig('paywalled_frequency.png')
 plt.show()
 
 '''
@@ -247,6 +245,7 @@ df_filtered = df.dropna(subset=['Retraction_to_Citation_Ratio', 'Citation_to_Ret
 plt.figure(figsize=(15, 10))
 df_filtered[['CitationCount', 'TimeDifference_Days', 'Retraction_to_Citation_Ratio', 'Citation_to_Retraction_Ratio']].hist(bins=30)
 plt.tight_layout()
+plt.savefig('distribution_analysis.png')
 plt.show()
 
 plt.figure(figsize=(15, 10))
@@ -255,8 +254,8 @@ for i, column in enumerate(['CitationCount', 'TimeDifference_Days', 'Retraction_
     sns.boxplot(df_filtered[column])
     plt.title(f'Box plot of {column}')
 plt.tight_layout()
+plt.savefig('box_plots.png')
 plt.show()
-
 
 '''
 ###############################################################
@@ -277,8 +276,8 @@ correlation_matrix = df.corr()
 plt.figure(figsize=(10, 8))
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
 plt.title('Correlation Matrix Heatmap')
+plt.savefig('correlation_matrix_heatmap.png')
 plt.show()
-
 
 '''
 ########################################################
@@ -305,6 +304,7 @@ plt.xlabel('Year')
 plt.ylabel('Count')
 plt.legend()
 plt.grid(True)
+plt.savefig('publications_retractions_over_time.png')
 plt.show()
 
 # Identify the common recent years excluding the year 2023
@@ -322,6 +322,7 @@ plt.xlabel('Year')
 plt.ylabel('Count')
 plt.legend()
 plt.grid(True)
+plt.savefig('publications_retractions_recent_years.png')
 plt.show()
 
 '''
@@ -332,7 +333,6 @@ plt.show()
 
 # Filter the data to include only years less than 2024 for RetractionDate and 2023 for OriginalPaperDate
 df_filtered = df[df['RetractionDate'].dt.year < 2023]
-
 
 # Function to count occurrences of each individual entry within the cells of a column
 def count_occurrences(column):
@@ -413,9 +413,8 @@ for column, top_n in top_n_values.items():
         ax_inset.set_ylabel('Count')
         ax_inset.grid(True)
     
+    plt.savefig(f'time_series_{column}.png')
     plt.show()
-
-
 
 '''
 ################################################################################
@@ -441,9 +440,6 @@ for column, top_n in top_n_values.items():
 # df['Retraction_to_Citation_Ratio'].fillna(df['Retraction_to_Citation_Ratio'].mean(), inplace=True)
 # df['Citation_to_Retraction_Ratio'].fillna(df['Citation_to_Retraction_Ratio'].mean(), inplace=True)
 
-
-
-
 ########################################
 ######### Analysis for Non-Paywalled ########################
 #######################################
@@ -464,31 +460,6 @@ def count_occurrences(df, column):
                 else:
                     occurrences[entry] = 1
     return occurrences
-
-########################################
-######### Analysis for Non-Paywalled ########################
-#######################################
-
-# Filter the data to include only non-paywalled retractions
-df_no_paywall = df[df['Paywalled'] == 'No']
-
-# Function to count occurrences of each individual entry within the cells of a column
-def count_occurrences(df, column):
-    occurrences = {}
-    for cell in df[column].dropna():
-        entries = re.split(r'[;,]', cell)
-        for entry in entries:
-            entry = entry.strip()
-            if entry:
-                if entry in occurrences:
-                    occurrences[entry] += 1
-                else:
-                    occurrences[entry] = 1
-    return occurrences
-
-########################################
-######### Analysis for Non-Paywalled ########################
-#######################################
 
 # Define the categorical columns to analyze
 categorical_columns_no_paywall = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason']
@@ -533,28 +504,16 @@ def plot_retractions_and_citations(df, category):
     
     plt.xticks(rotation=45, ha='right')
     plt.grid(True)
+    plt.savefig(f'retractions_and_citations_{category}.png')
     plt.show()
 
 # Perform the analysis and plotting for each specified category
 for category in categorical_columns_no_paywall:
     plot_retractions_and_citations(df_no_paywall, category)
 
-
-
-
-
-
-
-
-
-
-
 ########################################
 ######### World Map Analysis ########################
 #######################################
-
-import plotly.express as px
-import plotly.graph_objects as go
 
 # Load the uploaded CSV file
 file_path = 'country.csv'  # Update this path as needed
