@@ -72,14 +72,26 @@ def count_occurrences(df, column):
 def plot_top_10(df, column):
     occurrences = count_occurrences(df, column)
     sorted_occurrences = dict(sorted(occurrences.items(), key=lambda item: item[1], reverse=True)[:10])
-    plt.figure(figsize=(10, 5))
-    plt.bar(sorted_occurrences.keys(), sorted_occurrences.values())
-    plt.xlabel(column)
+    
+    # Generate a list of distinct colors for each bar
+    colors = plt.cm.tab10(np.arange(len(sorted_occurrences)))
+    
+    plt.figure(figsize=(12, 8))
+    bars = plt.bar(sorted_occurrences.keys(), sorted_occurrences.values(), color=colors)
     plt.ylabel('Frequency')
     plt.title(f'Top 10 Most Frequently Occurring Entries in {column}')
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks([])  # Remove x-axis labels
+
+    # Create legend with corresponding colors and a transparent background
+    legend_labels = sorted_occurrences.keys()
+    legend = plt.legend(bars, legend_labels, loc='upper right')
+    legend.get_frame().set_alpha(0.5)  # Set legend background to be transparent
+
     plt.savefig(f'top_10_{column}.png')
     plt.show()
+
+
+
 
 # Display network graph
 def display_network_graph(df, column_name, top_n=None, weighted_degree_thresh=1, drop_thresh=5):
@@ -366,6 +378,8 @@ def plot_world_map_analysis(file_path):
     fig.write_image("world_map_frequencies.pdf")
     fig.show()
 
+
+
 def main():
     file_path = './retractions35215.csv'
     df = load_data(file_path)
@@ -417,7 +431,12 @@ def main():
         plot_retractions_and_citations(df_no_paywall, category)
     
     plot_world_map_analysis('country.csv')
+    
+    # Save the transformed DataFrame to a CSV file
+    df.to_csv('transformed_retractions_after_EDA.csv', index=False)
+    
+    return df
 
 if __name__ == '__main__':
-    main()
-
+    df_transformed = main()
+    print("Column names after transformations:", df_transformed.columns.tolist())
