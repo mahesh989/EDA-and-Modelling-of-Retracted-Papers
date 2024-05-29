@@ -10,100 +10,72 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # Load the data
 def load_data(file_path):
-    return pd.read_csv(file_path)
-
-# Drop specified columns
-def drop_columns(df, columns_to_drop):
-    df.drop(columns=columns_to_drop, inplace=True)
-    return df
-
-
-def drop_duplicates_in_df(df, inplace=True):
-    if inplace:
-        df.drop_duplicates(inplace=inplace)
+    try:
+        df = pd.read_csv(file_path)
+        print("Data loaded successfully.")
+        return df
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
         return None
-    else:
-        return df.drop_duplicates()
 
-# Drop rows with null values in the 'Paywalled' column
-def drop_null_paywalled(df):
+# Drop specified columns, duplicates, and rows with null 'Paywalled' values
+def clean_data(df, columns_to_drop):
+    initial_shape = df.shape
+    df.drop(columns=[col for col in columns_to_drop if col in df.columns], inplace=True)
+    df.drop_duplicates(inplace=True)
     df.dropna(subset=['Paywalled'], inplace=True)
-    return df
-# Convert date columns to datetime
-def convert_dates(df):
-    df['OriginalPaperDate'] = pd.to_datetime(df['OriginalPaperDate'], dayfirst=True, errors='coerce')
-    df['RetractionDate'] = pd.to_datetime(df['RetractionDate'], dayfirst=True, errors='coerce')
+    df['Reason'] = df['Reason'].str.replace('+','',regex=False)
+    final_shape = df.shape
     return df
 
-# Create new columns for the time difference between OriginalPaperDate and RetractionDate
-def create_time_difference(df):
-    df['TimeDifference_Days'] = (df['RetractionDate'] - df['OriginalPaperDate']).dt.days
-    df['TimeDifference_Days'].replace(0, 1, inplace=True)  # Replace 0 with 1 in 'TimeDifference_Days'
-    time_diff_days_one_count = (df['TimeDifference_Days'] == 1).sum()
-    time_diff_days_one_rows = df[df['TimeDifference_Days'] == 1]
-    return df, time_diff_days_one_count, time_diff_days_one_rows
-
-# Create a new column for retraction to citation ratio
-def create_retraction_to_citation_ratio(df):
-    df['CitationCount'].replace(0, 1.1, inplace=True)  # Replace 0 with 1.1 in 'CitationCount'
-    df['Retraction_to_Citation_Ratio'] = df.apply(
-        lambda row: row['TimeDifference_Days'] / row['CitationCount'] if row['CitationCount'] != 0 else float('inf'), axis=1)
+# Convert date columns to datetime and create new columns for time difference and ratios
+def transform_dates_and_ratios(df):
+    df['OriginalPaperDate'] = pd.to_datetime(df['OriginalPaperDate'], format='%d/%m/%Y', errors='coerce')
+    df['RetractionDate'] = pd.to_datetime(df['RetractionDate'], format='%d/%m/%Y', errors='coerce')
+    df['TimeDifference_Days'] = (df['RetractionDate'] - df['OriginalPaperDate']).dt.days.replace(0, 1)
+    df['CitationCount'].replace(0, 1.1, inplace=True)
+    df['Retraction_to_Citation_Ratio'] = df['TimeDifference_Days'] / df['CitationCount']
+    df['Citation_to_Retraction_Ratio'] = df['CitationCount'] / df['TimeDifference_Days']
     return df
 
-# Create a new column for citation to retraction ratio
-def create_citation_to_retraction_ratio(df):
-    df['Citation_to_Retraction_Ratio'] = df.apply(
-        lambda row: row['CitationCount'] / row['TimeDifference_Days'] if row['TimeDifference_Days'] != 0 else float('inf'), axis=1)
-    citation_count_one_count = (df['CitationCount'] == 1.1).sum()  # Count the number of occurrences where 'CitationCount' is 1.1
-    return df, citation_count_one_count
-
-# Transform the Subject column
-def transform_subject(subject):
-    codes = re.findall(r'\((.*?)\)', subject)
-    return ', '.join(sorted(set(codes)))
-
-def apply_transform_subject(df):
-    df['Subject'] = df['Subject'].apply(transform_subject)
+# Transform the Subject column and apply transformation
+def transform_and_apply_subject(df):
+    df['Subject'] = df['Subject'].apply(lambda x: ', '.join(sorted(set(re.findall(r'\((.*?)\)', str(x))))))
+    unique_subjects = set()
+    df['Subject'].apply(lambda x: unique_subjects.update(x.split(', ')))
     return df
+
+# Save Data Function
+def save_data(df, filename):
+    df.to_csv(filename, index=False)
+    print(f"Data saved to {filename}")
 
 # Count occurrences of each individual entry within the cells of a column
 def count_occurrences(df, column):
     occurrences = {}
+    unique_values = set()
     for cell in df[column].dropna():
-        entries = re.split(r'[;,]', cell)
-        for entry in entries:
+        for entry in re.split(r'[;,]', cell.strip()):
             entry = entry.strip()
             if entry:
-                if entry in occurrences:
-                    occurrences[entry] += 1
-                else:
-                    occurrences[entry] = 1
+                occurrences[entry] = occurrences.get(entry, 0) + 1
+                unique_values.add(entry)
+    top_occurrences = dict(sorted(occurrences.items(), key=lambda item: item[1], reverse=True)[:10])
     return occurrences
 
 # Plot the top 10 most frequently occurring entries for a column
 def plot_top_10(df, column):
     occurrences = count_occurrences(df, column)
     sorted_occurrences = dict(sorted(occurrences.items(), key=lambda item: item[1], reverse=True)[:10])
-    
-    # Generate a list of distinct colors for each bar
     colors = plt.cm.tab10(np.arange(len(sorted_occurrences)))
-    
     plt.figure(figsize=(12, 8))
     bars = plt.bar(sorted_occurrences.keys(), sorted_occurrences.values(), color=colors)
     plt.ylabel('Frequency')
     plt.title(f'Top 10 Most Frequently Occurring Entries in {column}')
-    plt.xticks([])  # Remove x-axis labels
-
-    # Create legend with corresponding colors and a transparent background
-    legend_labels = sorted_occurrences.keys()
-    legend = plt.legend(bars, legend_labels, loc='upper right')
-    legend.get_frame().set_alpha(0.5)  # Set legend background to be transparent
-
+    plt.xticks([])
+    plt.legend(bars, sorted_occurrences.keys(), loc='upper right').get_frame().set_alpha(0.5)
     plt.savefig(f'top_10_{column}.png')
     plt.show()
-
-
-
 
 # Display network graph
 def display_network_graph(df, column_name, top_n=None, weighted_degree_thresh=1, drop_thresh=5):
@@ -111,18 +83,13 @@ def display_network_graph(df, column_name, top_n=None, weighted_degree_thresh=1,
     all_vals = [vv.strip() for vv in all_vals if vv not in ["", "Unknown", "unavailable", "Unavailable", "No affiliation available"]]
     all_vals_series = pd.Series(all_vals)
     top_rank = all_vals_series.value_counts().sort_values(ascending=False)
-    
     if top_n is not None:
         more_than_1 = list(top_rank.head(top_n).index)
     else:
         more_than_1 = list(top_rank.index)
-    
     if len(more_than_1) == 0:
-        print(f"No entries for {column_name}. Skipping...")
         return
-
     aa_cor_mat = pd.DataFrame(np.zeros((len(more_than_1), len(more_than_1))), columns=more_than_1, index=more_than_1)
-
     column_lists = list(df[column_name].dropna().str.split(";"))
     for cl in column_lists:
         cl = [item.strip() for item in cl]
@@ -134,52 +101,44 @@ def display_network_graph(df, column_name, top_n=None, weighted_degree_thresh=1,
                     continue
                 aa_cor_mat.loc[cl[ii], cl[jj]] += 1
                 aa_cor_mat.loc[cl[jj], cl[ii]] += 1
-    
     aa_cor_mat_reduced = aa_cor_mat.copy()
     for au in aa_cor_mat.columns:
         if aa_cor_mat[au].sum() < drop_thresh:
             aa_cor_mat_reduced = aa_cor_mat_reduced.drop(columns=[au])
             aa_cor_mat_reduced = aa_cor_mat_reduced.drop(index=[au])
-    
     if aa_cor_mat_reduced.shape[0] == 0 or aa_cor_mat_reduced.shape[1] == 0:
-        print(f"Empty reduced correlation matrix for {column_name}. Skipping...")
         return
-
     G = nx.from_pandas_adjacency(aa_cor_mat_reduced)
-
     high_degree_nodes = [node for node, degree in G.degree(weight="weight") if degree > weighted_degree_thresh]
     G = G.subgraph(high_degree_nodes)
-    
     if len(high_degree_nodes) == 0:
-        print(f"No high degree nodes for {column_name} after threshold filtering. Skipping...")
         return
-
     degrees = dict(G.degree())
     weighted_degrees = dict(G.degree(weight='weight'))
     highest_weighted_degree_node = max(weighted_degrees, key=weighted_degrees.get)
-    
     edge_weights = [np.log(data['weight']) for _, _, data in G.edges(data=True)]
     normalized_edge_weights = edge_weights
     degs = [d[1]**1.2 for d in G.degree(weight="weight")]
-
     plt.figure(figsize=(20, 20))
     pos = nx.spring_layout(G, k=1.8)
     nx.draw(G, with_labels=True, pos=pos, font_weight='bold', edge_color=normalized_edge_weights, width=normalized_edge_weights, edge_cmap=plt.cm.Reds, edge_vmin=0, edge_vmax=4, node_size=degs, node_color=degs, cmap=plt.cm.autumn)
     plt.title(f"Network of Co-occurring {column_name}")
     plt.savefig(f'network_graph_{column_name}.png')
-    plt.show()
+    plt.show()  
 
 # Frequency of Paywalled values
 def plot_paywalled_frequency(df):
     retractions_by_paywalled = df['Paywalled'].value_counts()
+    colors = plt.cm.tab10(np.arange(len(retractions_by_paywalled)))
     fig, ax = plt.subplots(figsize=(8, 6))
-    retractions_by_paywalled.plot(kind='bar', ax=ax, color='green', alpha=0.7)
+    bars = ax.bar(retractions_by_paywalled.index, retractions_by_paywalled.values, color=colors, alpha=0.7)
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Paywalled')
     ax.set_title('Frequency of Unique Values in Paywalled Column')
     ax.set_xticklabels(retractions_by_paywalled.index, rotation=0)
     for i in range(len(retractions_by_paywalled)):
         ax.text(i, retractions_by_paywalled[i] + 5, str(retractions_by_paywalled[i]), ha='center', color='black')
+    ax.legend(bars, retractions_by_paywalled.index, loc='upper right').get_frame().set_alpha(0.5)
     plt.grid(True)
     plt.savefig('paywalled_frequency.png')
     plt.show()
@@ -188,17 +147,14 @@ def plot_paywalled_frequency(df):
 def plot_distribution_analysis(df):
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_filtered = df.dropna(subset=['Retraction_to_Citation_Ratio', 'Citation_to_Retraction_Ratio'])
-
-    plt.figure(figsize=(15, 10))
-    df_filtered[['CitationCount', 'TimeDifference_Days', 'Retraction_to_Citation_Ratio', 'Citation_to_Retraction_Ratio']].hist(bins=30)
+    df_filtered[['CitationCount', 'TimeDifference_Days', 'Retraction_to_Citation_Ratio', 'Citation_to_Retraction_Ratio']].hist(bins=30, figsize=(15, 10))
     plt.tight_layout()
     plt.savefig('distribution_analysis.png')
     plt.show()
-
     plt.figure(figsize=(15, 10))
     for i, column in enumerate(['CitationCount', 'TimeDifference_Days', 'Retraction_to_Citation_Ratio', 'Citation_to_Retraction_Ratio'], 1):
         plt.subplot(2, 2, i)
-        sns.boxplot(df_filtered[column])
+        sns.boxplot(x=df_filtered[column])
         plt.title(f'Box plot of {column}')
     plt.tight_layout()
     plt.savefig('box_plots.png')
@@ -221,14 +177,11 @@ def plot_correlation_matrix(df):
 # Time Series Analysis
 def plot_time_series_analysis(df):
     df_filtered = df[df['RetractionDate'].dt.year < 2024]
-    df_filtered = df_filtered[df_filtered['OriginalPaperDate'].dt.year < 2023]
-
+    df_filtered = df_filtered[df['OriginalPaperDate'].dt.year < 2023]
     df_filtered['Year_Retraction'] = df_filtered['RetractionDate'].dt.year
     retractions_by_year = df_filtered['Year_Retraction'].value_counts().sort_index()
-
     df_filtered['Year_Publication'] = df_filtered['OriginalPaperDate'].dt.year
     publications_by_year = df_filtered['Year_Publication'].value_counts().sort_index()
-
     plt.figure(figsize=(10, 5))
     plt.plot(publications_by_year.index, publications_by_year.values, label='Publications', color='cyan', marker='o')
     plt.plot(retractions_by_year.index, retractions_by_year.values, label='Retractions', color='blue', marker='o')
@@ -239,13 +192,10 @@ def plot_time_series_analysis(df):
     plt.grid(True)
     plt.savefig('publications_retractions_over_time.png')
     plt.show()
-
     common_recent_years = retractions_by_year.index.intersection(publications_by_year.index)
     common_recent_years = common_recent_years.sort_values()[-10:]
-
     retractions_recent = retractions_by_year.loc[common_recent_years]
     publications_recent = publications_by_year.loc[common_recent_years]
-
     plt.figure(figsize=(10, 5))
     plt.plot(publications_recent.index, publications_recent.values, label='Publications', color='cyan', marker='o')
     plt.plot(retractions_recent.index, retractions_recent.values, label='Retractions', color='blue', marker='o')
@@ -261,25 +211,20 @@ def plot_time_series_analysis(df):
 def plot_time_series_by_category(df, column, top_n):
     occurrences = count_occurrences(df, column)
     top_values = sorted(occurrences, key=occurrences.get, reverse=True)[:top_n]
-    
     fig, ax_main = plt.subplots(figsize=(12, 6))
-    
     for value in top_values:
         df_value_filtered = df[df[column].str.contains(value, na=False, regex=False)].copy()
         df_value_filtered.loc[:, 'Year_Retraction'] = df_value_filtered['RetractionDate'].dt.year
         retractions_by_year = df_value_filtered['Year_Retraction'].value_counts().sort_index()
         ax_main.plot(retractions_by_year.index, retractions_by_year.values, marker='o', label=value)
-    
     ax_main.set_title(f'Retractions Over Time for Top {top_n} {column}')
     ax_main.set_xlabel('Year')
     ax_main.set_ylabel('Count')
     ax_main.legend()
     ax_main.grid(True)
-
     if column != 'Author':
         ax_inset = inset_axes(ax_main, width="40%", height="40%", loc="center left")
         recent_years = retractions_by_year.index.sort_values()[-5:]
-        
         for value in top_values:
             df_value_filtered = df[df[column].str.contains(value, na=False, regex=False)].copy()
             df_value_filtered.loc[:, 'Year_Retraction'] = df_value_filtered['RetractionDate'].dt.year
@@ -287,14 +232,12 @@ def plot_time_series_by_category(df, column, top_n):
             common_recent_years = recent_years.intersection(retractions_by_year.index)
             retractions_recent = retractions_by_year.loc[common_recent_years]
             ax_inset.plot(retractions_recent.index, retractions_recent.values, marker='o', label=value)
-        
         ax_inset.yaxis.set_label_position("right")
         ax_inset.yaxis.tick_right()
         ax_inset.set_title('Last 5 Years')
         ax_inset.set_xlabel('Year')
         ax_inset.set_ylabel('Count')
         ax_inset.grid(True)
-    
     plt.savefig(f'time_series_{column}.png')
     plt.show()
 
@@ -306,20 +249,34 @@ def plot_retractions_and_citations(df, category):
     retractions_by_category = df_top[category].apply(lambda x: [val for val in top_values if val in str(x)]).explode().value_counts()
     citations_by_category = {value: df_top[df_top[category].str.contains(value, na=False, regex=False)]['CitationCount'].sum() for value in top_values}
     citations_by_category = pd.Series(citations_by_category)
-    
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    retractions_by_category.plot(kind='bar', ax=ax1, color='blue', alpha=0.6, position=0, width=0.4, label='Total Retractions')
-    ax1.set_ylabel('Total Retractions')
-    ax1.set_xlabel(category)
-    ax1.set_title(f'Total Number of Retractions and Total Citations by Top 5 {category} (1990-2023, Paywalled: No)')
-    
-    ax2 = ax1.twinx()
-    citations_by_category.plot(kind='bar', ax=ax2, color='red', alpha=0.6, position=1, width=0.4, label='Total Citations')
-    ax2.set_ylabel('Total Citations')
-    
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
-    plt.xticks(rotation=45, ha='right')
+    sorted_indices = retractions_by_category.sort_values().index
+    retractions_by_category = retractions_by_category[sorted_indices]
+    citations_by_category = citations_by_category[sorted_indices]
+    colors_citations = 'blue'
+    colors_retractions = 'red'
+    fig, ax = plt.subplots(figsize=(14, 8))
+    bar_width = 0.35
+    index = np.arange(len(top_values))
+    bars1 = ax.bar(index, citations_by_category.values, bar_width, color=colors_citations, alpha=0.6, label='Total Citations')
+    bars2 = ax.bar(index + bar_width, retractions_by_category.values, bar_width, color=colors_retractions, alpha=0.6, label='Total Retractions')
+    ax.set_ylabel('Count')
+    ax.set_title(f'Total Number of Retractions and Total Citations by Top 5 {category} (1990-2023')
+    def shorten_label(label):
+        words = label.split()
+        if len(words) > 3:
+            return ' '.join(words[:3]) + '...'
+        else:
+            return label
+    labels = [shorten_label(val) for val in retractions_by_category.index]
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(labels, rotation=45, ha='right')
+    for bar in bars1:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, yval + 5, f'{int(yval)}', ha='center', va='bottom', color='black')
+    for bar in bars2:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, yval + 5, f'{int(yval)}', ha='center', va='bottom', color='black')
+    ax.legend(loc='upper right', title='Type')
     plt.grid(True)
     plt.savefig(f'retractions_and_citations_{category}.png')
     plt.show()
@@ -329,140 +286,166 @@ def plot_world_map_analysis(file_path):
     country_data = pd.read_csv(file_path)
     total_frequency = country_data['Frequency'].sum()
     country_data['Percentage'] = (country_data['Frequency'] / total_frequency) * 100
-    color_palette = [
-        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', 
-        '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', 
-        '#bcbd22', '#17becf', '#9edae5'
-    ]
-    above_22000_color = '#ff1493'
-    max_frequency = country_data['Frequency'].max()
-    bins = pd.cut(country_data['Frequency'], bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, max_frequency],
-                  labels=['0-500', '501-1000', '1001-1500', '1501-2000', '2001-2500', '2501-3000', '3001-3500', '3501-4000', '4001-4500', f'4501-{max_frequency}'], include_lowest=True)
-    bin_color_map = {
-        '0-500': color_palette[0],
-        '501-1000': color_palette[1],
-        '1001-1500': color_palette[2],
-        '1501-2000': color_palette[3],
-        '2001-2500': color_palette[4],
-        '2501-3000': color_palette[5],
-        '3001-3500': color_palette[6],
-        '3501-4000': color_palette[7],
-        '4001-4500': color_palette[8],
-        f'4501-{max_frequency}': above_22000_color
-    }
-    country_data['color'] = bins.map(lambda bin_label: bin_color_map[bin_label])
-    country_data['hover_text'] = country_data.apply(
-        lambda row: f"Country: {row['Country']}<br>Freq: {row['Frequency']}<br>{row['Percentage']:.2f}%", axis=1)
+    color_palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    bins = pd.cut(country_data['Frequency'], bins=10, labels=color_palette, include_lowest=True)
+    country_data['color'] = bins
+    country_data['hover_text'] = country_data.apply(lambda row: f"Country: {row['Country']}<br>Freq: {row['Frequency']}<br>{row['Percentage']:.2f}%", axis=1)
+    fig = px.choropleth(country_data, locations='Country', locationmode='country names', color='Frequency', hover_name='Country',
+                        hover_data={'Frequency': True, 'Percentage': True, 'color': False}, title='World Map with Country Frequencies',
+                        color_continuous_scale=color_palette)
     top_5_countries = country_data.nlargest(5, 'Frequency')
-    fig = px.choropleth(
-        country_data,
-        locations='Country',
-        locationmode='country names',
-        color='Frequency',
-        hover_name='Country',
-        hover_data={'Frequency': True, 'Percentage': True, 'color': False},
-        title='World Map with Country Frequencies',
-        color_continuous_scale=color_palette + [above_22000_color]
-    )
     for _, row in top_5_countries.iterrows():
-        fig.add_trace(
-            go.Scattergeo(
-                locationmode='country names',
-                locations=[row['Country']],
-                text=row['Country'],
-                mode='text',
-                showlegend=False,
-                textfont=dict(
-                    size=16,
-                    color='black'
-                )
-            )
-        )
-    fig.update_layout(
-        width=1600,
-        height=1200,
-        coloraxis_colorbar=dict(
-            title='Frequency',
-            tickvals=[0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000, max_frequency],
-            ticktext=['0', '2000', '4000', '6000', '8000', '10000', '12000', '14000', '16000', '18000', '20000', '22000']
-        )
-    )
+        fig.add_trace(go.Scattergeo(locationmode='country names', locations=[row['Country']], text=row['Country'], mode='text', showlegend=False,
+                                    textfont=dict(size=16, color='black')))
+    fig.update_layout(width=1600, height=1200, coloraxis_colorbar=dict(title='Frequency'))
     fig.write_image("world_map_frequencies.pdf")
     fig.show()
 
+# Filter the data for entries where the country is China
+def filter_country(df, country):
+    return df[df['Country'] == country]
+
+# Function to wrap text into multiple lines with a maximum of three words per line
+def wrap_text(text, max_words_per_line=3):
+    words = text.split()
+    wrapped_text = '\n'.join(
+        [' '.join(words[i:i + max_words_per_line]) for i in range(0, len(words), max_words_per_line)]
+    )
+    return wrapped_text
+
+# Function to plot top 3 values for a given column as a pie chart with an "Other" category
+def plot_top_3_pie(df, column):
+    value_counts = df[column].value_counts()
+    top_3 = value_counts.nlargest(3)
+    other_count = value_counts.iloc[3:].sum()
+    labels = [wrap_text(label) for label in top_3.index] + ['Other']
+    sizes = list(top_3.values) + [other_count]
+    colors = sns.color_palette("husl", len(labels))
+    fig, ax = plt.subplots(figsize=(8, 8))
+    wedges, texts, autotexts = ax.pie(
+        sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, textprops=dict(color="w")
+    )
+    for text in texts:
+        text.set_color('black')
+        text.set_fontsize(10)
+    for autotext in autotexts:
+        autotext.set_color('black')
+        autotext.set_fontsize(10)
+    ax.set_title(f'Top 3 {column} when Country is China')
+    plt.tight_layout()
+    plt.show()
 
 def main():
     file_path = './retractions35215.csv'
     df = load_data(file_path)
-    print(df.columns)
-    print(df.shape)
-    print(df.duplicated().sum())
+    if df is None:
+        return
     columns_to_drop = ['Record ID', 'URLS', 'OriginalPaperDOI', 'RetractionDOI', 'RetractionPubMedID', 
                        'OriginalPaperPubMedID', 'Title', 'Institution', 'Notes']
-    df = drop_columns(df, columns_to_drop)
-    print(df.columns)
-    print(df.shape)
-    print(df.duplicated().sum())
-    # Dropping duplicates after dropping columns
-    drop_duplicates_in_df(df, inplace=True)
-    print(df.columns)
-    print(df.shape)
-    print(df.duplicated().sum())
-    df = drop_null_paywalled(df)
-    df = convert_dates(df)
-    df, time_diff_days_one_count, time_diff_days_one_rows = create_time_difference(df)
-    df = create_retraction_to_citation_ratio(df)
-    df, citation_count_one_count = create_citation_to_retraction_ratio(df)
-    print(df.duplicated().sum())
-    df = apply_transform_subject(df)
-    print('When Citation count is zero')
-    print(df[df['CitationCount']==0])
-    
-    columns_to_analyze = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason', 'Author','Paywalled']
-    for column in columns_to_analyze:
-        plot_top_10(df, column)
-    
-    params = {
-        'Reason': {'top_n': 20, 'weighted_degree_thresh': 1, 'drop_thresh': 5},
-        'Author': {'top_n': 1, 'weighted_degree_thresh': 1, 'drop_thresh': 1},
-        'Subject': {'top_n': None, 'weighted_degree_thresh': 1, 'drop_thresh': 3},
-        'Country': {'top_n': 100, 'weighted_degree_thresh': 1, 'drop_thresh': 2}
-    }
-    for column in params:
-        display_network_graph(df, column, **params[column])
-    
-    plot_paywalled_frequency(df)
-    plot_distribution_analysis(df)
-    display_summary_statistics(df)
-    plot_correlation_matrix(df)
-    plot_time_series_analysis(df)
-    
-    top_n_values = {
-        'Subject': 5,
-        'Journal': 5,
-        'Author': 5,
-        'Publisher': 5,
-        'Country': 5,
-        'ArticleType': 5,
-        'Reason': 5
-    }
-    for column, top_n in top_n_values.items():
-        plot_time_series_by_category(df, column, top_n)
-    
-    df_no_paywall = df[df['Paywalled'] == 'No']
-    categorical_columns_no_paywall = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason']
-    for category in categorical_columns_no_paywall:
-        plot_retractions_and_citations(df_no_paywall, category)
-    
-    plot_world_map_analysis('country.csv')
-    
-    # Save the transformed DataFrame to a CSV file
-    df.to_csv('transformed_retractions_after_EDA.csv', index=False)
-    
+    df = clean_data(df, columns_to_drop)
+    df = transform_dates_and_ratios(df)
+    df = transform_and_apply_subject(df)
+    save_data(df, 'file_before_modelling.csv')
     return df
 
+def main_top_10():
+    df = main()
+    if df is None:
+        return
+    columns_to_analyze = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason', 'Author']
+    for column in columns_to_analyze:
+        plot_top_10(df, column)
+        save_data(df, f'top_10_{column}.csv')
+
+def main_network_graphs():
+    df = main()
+    if df is None:
+        return
+    params = {
+        'Reason': {'top_n': 20, 'weighted_degree_thresh': 1, 'drop_thresh': 5},
+        'Author': {'top_n': 10, 'weighted_degree_thresh': 1, 'drop_thresh': 2},
+        'Subject': {'top_n': 100, 'weighted_degree_thresh': 1, 'drop_thresh': 1},
+        'Country': {'top_n': 50, 'weighted_degree_thresh': 1, 'drop_thresh': 2}
+    }
+    for column, param in params.items():
+        display_network_graph(df, column, **param)
+        save_data(df, f'network_graph_{column}.csv')
+
+def main_paywalled_frequency():
+    df = main()
+    if df is None:
+        return
+    plot_paywalled_frequency(df)
+    save_data(df, 'paywalled_frequency.csv')
+
+def main_distribution_analysis():
+    df = main()
+    if df is None:
+        return
+    plot_distribution_analysis(df)
+    save_data(df, 'distribution_analysis.csv')
+
+def main_summary_statistics():
+    df = main()
+    if df is None:
+        return
+    display_summary_statistics(df)
+    save_data(df, 'summary_statistics.csv')
+
+def main_correlation_matrix():
+    df = main()
+    if df is None:
+        return
+    plot_correlation_matrix(df)
+    save_data(df, 'correlation_matrix.csv')
+
+def main_time_series_analysis():
+    df = main()
+    if df is None:
+        return
+    plot_time_series_analysis(df)
+    save_data(df, 'time_series_analysis.csv')
+
+def main_time_series_by_category():
+    df = main()
+    if df is None:
+        return
+    top_n_values = {'Subject': 5, 'Journal': 5, 'Author': 5, 'Publisher': 5, 'Country': 5, 'ArticleType': 5, 'Reason': 5}
+    for column, top_n in top_n_values.items():
+        plot_time_series_by_category(df, column, top_n)
+        save_data(df, f'time_series_{column}.csv')
+
+def main_retractions_and_citations():
+    df = main()
+    if df is None:
+        return
+    df_no_paywall = df[df['Paywalled'] == 'No']
+    for category in ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason']:
+        plot_retractions_and_citations(df_no_paywall, category)
+        save_data(df, f'retractions_and_citations_{category}.csv')
+
+def main_world_map_analysis():
+    plot_world_map_analysis('country.csv')
+
+def main_top_3_pie_china():
+    df = main()
+    if df is None:
+        return
+    df_china = filter_country(df, 'China')
+    columns_to_plot = ['Reason', 'Publisher', 'Subject']
+    for column in columns_to_plot:
+        plot_top_3_pie(df_china, column)
+        save_data(df_china, f'top_3_pie_{column}.csv')
+
 if __name__ == '__main__':
-    df_transformed = main()
-    print("Column names after transformations:", df_transformed.columns.tolist())
-
-
+    main_top_10()
+    main_network_graphs()
+    main_paywalled_frequency()
+    main_distribution_analysis()
+    main_summary_statistics()
+    main_correlation_matrix()
+    main_time_series_analysis()
+    main_time_series_by_category()
+    main_retractions_and_citations()
+    main_world_map_analysis()
+    main_top_3_pie_china()

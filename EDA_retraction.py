@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+
 # Load the data
 def load_data(file_path):
     try:
@@ -66,6 +67,7 @@ def transform_and_apply_subject(df):
     #     print(subject)
     
     return df
+
 
 # Count occurrences of each individual entry within the cells of a column
 def count_occurrences(df, column):
@@ -504,8 +506,11 @@ def main():
     # Data Cleaning and Transformation
     df = transform_dates_and_ratios(df)
     df = transform_and_apply_subject(df)
-    
+    print('File saving:')
+    save_data(df, 'file_before_modelling.csv')
     return df
+
+
 
 def main_top_10():
     df = main()
@@ -590,6 +595,10 @@ def main_top_3_pie_china():
     columns_to_plot = ['Reason', 'Publisher', 'Subject']
     for column in columns_to_plot:
         plot_top_3_pie(df_china, column)
+def save_data(df, filename):
+    df.to_csv('retraction_before_modelling.csv', index=False)
+    print(f"Data saved to {filename}")
+
 
 if __name__ == '__main__':
     # Choose which main function to run based on the analysis you want to perform
@@ -605,7 +614,7 @@ if __name__ == '__main__':
     # main_time_series_by_category()
     # main_retractions_and_citations()
     # main_world_map_analysis()
-    #main_top_3_pie_china()
+    main_top_3_pie_china()
     
     # For demonstration, you can uncomment the following line to execute the main function
     # df_transformed = main()
