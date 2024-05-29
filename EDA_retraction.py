@@ -554,10 +554,26 @@ def main_summary_statistics():
     display_summary_statistics(df)
 
 def main_correlation_matrix():
+    # Assuming `main()` returns your DataFrame `df`
     df = main()
     if df is None:
         return
-    plot_correlation_matrix(df)
+
+    # Calculate correlation matrix
+    correlation_matrix = df.corr()
+
+    # Print correlation matrix as a table
+    print("Correlation Matrix:")
+    print(correlation_matrix)
+    print()
+
+    # Plot correlation matrix heatmap
+    print("Correlation Matrix Heatmap:")
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+    plt.title('Correlation Matrix Heatmap')
+    plt.show()
+
 
 def main_time_series_analysis():
     df = main()
@@ -609,12 +625,12 @@ if __name__ == '__main__':
     # main_paywalled_frequency()
     # main_distribution_analysis()
     # main_summary_statistics()
-    # main_correlation_matrix()
+    main_correlation_matrix()
     # main_time_series_analysis()
     # main_time_series_by_category()
     # main_retractions_and_citations()
     # main_world_map_analysis()
-    main_top_3_pie_china()
+    # main_top_3_pie_china()
     
     # For demonstration, you can uncomment the following line to execute the main function
     # df_transformed = main()
