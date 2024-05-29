@@ -47,6 +47,8 @@ def replace_with_most_frequent(column, occurrences):
 for column in columns_to_analyze:
     occurrences = count_occurrences(column)
     replace_with_most_frequent(column, occurrences)
+    
+df['Retraction_to_Mean_Days_Ratio'] = df['Retraction_to_Citation_Ratio'] / df['TimeDifference_Days']
 
 
 df.columns
