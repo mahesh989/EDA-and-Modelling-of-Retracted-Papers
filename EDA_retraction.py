@@ -620,17 +620,17 @@ if __name__ == '__main__':
     # Choose which main function to run based on the analysis you want to perform
     # Uncomment the appropriate function call below to execute it
 
-    #main_top_10()
-    # main_network_graphs()
-    # main_paywalled_frequency()
-    # main_distribution_analysis()
-    # main_summary_statistics()
+    main_top_10()
+    main_network_graphs()
+    main_paywalled_frequency()
+    main_distribution_analysis()
+    main_summary_statistics()
     main_correlation_matrix()
-    # main_time_series_analysis()
-    # main_time_series_by_category()
-    # main_retractions_and_citations()
-    # main_world_map_analysis()
-    # main_top_3_pie_china()
+    main_time_series_analysis()
+    main_time_series_by_category()
+    main_retractions_and_citations()
+    main_world_map_analysis()
+    main_top_3_pie_china()
     
     # For demonstration, you can uncomment the following line to execute the main function
     # df_transformed = main()
