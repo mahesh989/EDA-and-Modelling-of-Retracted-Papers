@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
@@ -7,6 +8,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, explained_variance_score
+import matplotlib.pyplot as plt
 
 def preprocess_data(df):
     # Convert categorical columns to category type
@@ -32,11 +34,18 @@ def train_evaluate_model(model, X_train, y_train, X_test, y_test):
     mae = mean_absolute_error(y_test, y_pred)
     evs = explained_variance_score(y_test, y_pred)
     
-    return mse, r2, mae, evs
+    return mse, r2, mae, evs, y_test, y_pred
 
 def main():
+    # Determine the base directory of the script
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Construct the file path for the input CSV file
+    input_file_name = 'preprocessed_data_with_clusters.csv'
+    input_file_path = os.path.normpath(os.path.join(base_dir, '../../data/processed', input_file_name))
+    
     # Read the data
-    df = pd.read_csv('./preprocessed_data_with_clusters.csv')
+    df = pd.read_csv(input_file_path)
     
     # Preprocess data
     df = preprocess_data(df)
@@ -78,21 +87,32 @@ def main():
         ])
     }
     
+    # Create directory for figures if it does not exist
+    figures_dir = os.path.normpath(os.path.join(base_dir, '../../results/figures'))
+    if not os.path.exists(figures_dir):
+        os.makedirs(figures_dir)
+
     for name, model in models.items():
         print(f"\n{name} Model:")
-        mse, r2, mae, evs = train_evaluate_model(model, X_train, y_train, X_test, y_test)
+        mse, r2, mae, evs, y_test, y_pred = train_evaluate_model(model, X_train, y_train, X_test, y_test)
         print("Mean Squared Error:", mse)
         print("R^2 Score:", r2)
         print("Mean Absolute Error:", mae)
         print("Explained Variance Score:", evs)
+        
+        # Convert y_test to numeric if it's categorical
+        y_test_numeric = y_test.cat.codes if pd.api.types.is_categorical_dtype(y_test) else y_test
+        y_pred_numeric = pd.Series(y_pred).astype(float)
+
+        # Plotting the results
+        plt.figure(figsize=(10, 6))
+        plt.scatter(y_test_numeric, y_pred_numeric, edgecolors=(0, 0, 0))
+        plt.plot([y_test_numeric.min(), y_test_numeric.max()], [y_test_numeric.min(), y_test_numeric.max()], 'k--', lw=4)
+        plt.xlabel('Measured')
+        plt.ylabel('Predicted')
+        plt.title(f'{name} Model: Measured vs Predicted')
+        plt.savefig(os.path.join(figures_dir, f'{name}_measured_vs_predicted.png'))
+        plt.show()
 
 if __name__ == "__main__":
     main()
-
-
-    
-    
-    
-    
-    
-    

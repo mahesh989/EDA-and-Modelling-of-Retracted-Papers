@@ -1,0 +1,42 @@
+\contentsline {figure}{\numberline {1}{\ignorespaces Top 10 Most Frequently Occurring Subject\relax }}{5}{figure.caption.4}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Top 10 Most Frequently Occurring Journals\relax }}{5}{figure.caption.5}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Top 10 Most Frequently Occurring Publishers\relax }}{6}{figure.caption.6}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Top 10 Most Frequently Occurring Countries\relax }}{7}{figure.caption.7}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Top 10 Most Frequently Occurring Article Types\relax }}{8}{figure.caption.8}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Top 10 Most Frequently Occurring Retraction Reasons\relax }}{8}{figure.caption.9}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Top 10 Most Frequently Occurring Authors\relax }}{9}{figure.caption.10}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Paywalled Frequency Distribution\relax }}{10}{figure.caption.11}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Retraction around the world.\relax }}{11}{figure.caption.12}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Network Graph for Retraction Reasons\relax }}{12}{figure.caption.13}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Network Graph for Countries\relax }}{13}{figure.caption.14}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Histogram analysis of numerical columns.\relax }}{14}{figure.caption.15}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Boxplot analysis of numerical columns.\relax }}{15}{figure.caption.16}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Correlation Matrix\relax }}{16}{figure.caption.17}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Publication and Retractions over time\relax }}{17}{figure.caption.18}%
+\contentsline {figure}{\numberline {16}{\ignorespaces Publication and Retractions in recent years.\relax }}{17}{figure.caption.19}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Retractions Over Time for Top 5 Subjects\relax }}{19}{figure.caption.21}%
+\contentsline {figure}{\numberline {18}{\ignorespaces Retractions Over Time for Top 5 Journals\relax }}{20}{figure.caption.22}%
+\contentsline {figure}{\numberline {19}{\ignorespaces Retractions Over Time for Top 5 Authors\relax }}{20}{figure.caption.23}%
+\contentsline {figure}{\numberline {20}{\ignorespaces Retractions Over Time for Top 5 Publishers\relax }}{21}{figure.caption.24}%
+\contentsline {figure}{\numberline {21}{\ignorespaces Retractions Over Time for Top 5 Countries\relax }}{21}{figure.caption.25}%
+\contentsline {figure}{\numberline {22}{\ignorespaces Retractions Over Time for Top 5 Article Types\relax }}{22}{figure.caption.26}%
+\contentsline {figure}{\numberline {23}{\ignorespaces Retractions Over Time for Top 5 Reasons\relax }}{23}{figure.caption.27}%
+\contentsline {figure}{\numberline {24}{\ignorespaces Retractions and Citations by Article Type\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {25}{\ignorespaces Retractions and Citations by Journal\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {26}{\ignorespaces Retractions and Citations by Publisher\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {27}{\ignorespaces Retractions and Citations by Country\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {28}{\ignorespaces Retractions and Citations by Reason\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {29}{\ignorespaces Retractions and Citations by Subject\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {30}{\ignorespaces Retractions and Citations Analysis\relax }}{24}{figure.caption.28}%
+\contentsline {figure}{\numberline {31}{\ignorespaces Baseline Model Output\relax }}{26}{figure.caption.30}%
+\contentsline {figure}{\numberline {32}{\ignorespaces Random Forest Regressor Output\relax }}{27}{figure.caption.32}%
+\contentsline {figure}{\numberline {33}{\ignorespaces Random Forest Regressor Output after Hyperparameter Tuning\relax }}{27}{figure.caption.34}%
+\contentsline {figure}{\numberline {34}{\ignorespaces Model Interpretation\relax }}{31}{figure.caption.35}%
+\contentsline {figure}{\numberline {35}{\ignorespaces Optimal Number of Clusters - Elbow Method\relax }}{32}{figure.caption.36}%
+\contentsline {figure}{\numberline {36}{\ignorespaces Distribution of Country across Clusters\relax }}{33}{figure.caption.37}%
+\contentsline {figure}{\numberline {37}{\ignorespaces Distribution of Reason across Clusters\relax }}{33}{figure.caption.37}%
+\contentsline {figure}{\numberline {38}{\ignorespaces Distribution of Article Type across Clusters\relax }}{33}{figure.caption.37}%
+\contentsline {figure}{\numberline {39}{\ignorespaces Distribution of Publisher across Clusters\relax }}{33}{figure.caption.37}%
+\contentsline {figure}{\numberline {40}{\ignorespaces Model Comparison\relax }}{34}{figure.caption.38}%
+\contentsline {figure}{\numberline {41}{\ignorespaces Confusion Matrix - Random Forest Classifier\relax }}{35}{figure.caption.39}%
+\contentsfinish 
