@@ -375,7 +375,16 @@ def plot_retractions_and_citations(df, category):
     plt.savefig(os.path.join(figures_dir, f'retractions_and_citations_{category}.png'))
     plt.show()
 
-# World Map Analysis
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import os
+
+def ensure_directory_exists(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 def plot_world_map_analysis(file_path):
     country_data = pd.read_csv(file_path)
     total_frequency = country_data['Frequency'].sum()
@@ -396,8 +405,15 @@ def plot_world_map_analysis(file_path):
                                     textfont=dict(size=16, color='black')))
     
     fig.update_layout(width=1600, height=1200, coloraxis_colorbar=dict(title='Frequency'))
-    fig.write_image("world_map_frequencies.pdf")
-    fig.show()
+    
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    figures_dir = os.path.normpath(os.path.join(base_dir, '../../results/figures'))
+    ensure_directory_exists(figures_dir)
+    
+    output_file_path = os.path.join(figures_dir, 'worldmap.png')
+    fig.write_image(output_file_path)  # Save the figure as a PNG file
+    fig.show()  # Display the figure
+
 
 # Filter the data for entries where the country is China
 def filter_country(df, country):
@@ -566,14 +582,14 @@ def main_top_3_pie_china():
 if __name__ == '__main__':
     # main_top_10()
     # main_network_graphs()
-    main_paywalled_frequency()
+    #main_paywalled_frequency()
     # main_distribution_analysis()
     # main_summary_statistics()
     # main_correlation_matrix()
     # main_time_series_analysis()
     # main_time_series_by_category()
     # main_retractions_and_citations()
-    # main_world_map_analysis()
+    main_world_map_analysis()
     # main_top_3_pie_china()
     
     # For demonstration, you can uncomment the following line to execute the main function

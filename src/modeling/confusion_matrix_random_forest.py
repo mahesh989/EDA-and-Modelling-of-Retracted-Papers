@@ -1,3 +1,4 @@
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -8,6 +9,7 @@ from sklearn.pipeline import Pipeline
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+
 def generate_classification_report(df, output_dir):
     # Define categorical and numerical features
     cat_cols = ['Subject', 'Journal', 'Publisher', 'Country', 'ArticleType', 'Reason', 'Paywalled']
@@ -62,14 +64,25 @@ def generate_classification_report(df, output_dir):
     with open(os.path.join(output_dir, 'classification_report.txt'), 'w') as f:
         f.write(classification_rep)
 
-# Read the data
-df = pd.read_csv('./preprocessed_data_with_clusters.csv')
+def main():
+    # Determine the base directory of the script
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Construct the file path for the input CSV file
+    input_file_name = 'preprocessed_data_with_clusters.csv'
+    input_file_path = os.path.normpath(os.path.join(base_dir, '../../data/processed', input_file_name))
+    
+    # Read the data
+    df = pd.read_csv(input_file_path)
 
-# Output directory
-output_dir = './classification_results'
+    # Output directory
+    output_dir = os.path.normpath(os.path.join(base_dir, '../../classification_results'))
 
-# Create the output directory if it doesn't exist
-os.makedirs(output_dir, exist_ok=True)
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
 
-# Generate classification report
-generate_classification_report(df, output_dir)
+    # Generate classification report
+    generate_classification_report(df, output_dir)
+
+if __name__ == "__main__":
+    main()
