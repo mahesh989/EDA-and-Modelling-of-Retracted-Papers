@@ -13,7 +13,7 @@ def run_script(script_path):
         raise
 
 def main():
-    # Determine the base directory of the script
+    # Determine the base directory 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Define the paths to the scripts

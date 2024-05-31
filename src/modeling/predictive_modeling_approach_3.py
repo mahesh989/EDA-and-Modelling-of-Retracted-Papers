@@ -37,7 +37,7 @@ def train_evaluate_model(model, X_train, y_train, X_test, y_test):
     return mse, r2, mae, evs, y_test, y_pred
 
 def main():
-    # Determine the base directory of the script
+    # Determine the base directory 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Construct the file path for the input CSV file
