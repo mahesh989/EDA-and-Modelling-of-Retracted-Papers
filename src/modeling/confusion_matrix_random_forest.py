@@ -70,19 +70,4 @@ def main():
     
     # Construct the file path for the input CSV file
     input_file_name = 'preprocessed_data_with_clusters.csv'
-    input_file_path = os.path.normpath(os.path.join(base_dir, '../../data/processed', input_file_name))
-    
-    # Read the data
-    df = pd.read_csv(input_file_path)
-
-    # Output directory
-    output_dir = os.path.normpath(os.path.join(base_dir, '../../classification_results'))
-
-    # Create the output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Generate classification report
-    generate_classification_report(df, output_dir)
-
-if __name__ == "__main__":
-    main()
+    input_file_path = os.path.normpath(os.path.join(base_dir, '../
