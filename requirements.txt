@@ -142,7 +142,6 @@ nbconvert @ file:///home/conda/feedstock_root/build_artifacts/nbconvert-meta_167
 nbformat @ file:///home/conda/feedstock_root/build_artifacts/nbformat_1673560067442/work
 nest-asyncio @ file:///home/conda/feedstock_root/build_artifacts/nest-asyncio_1664684991461/work
 networkx==3.1
-nltk==3.8.1
 notebook @ file:///home/conda/feedstock_root/build_artifacts/notebook_1667565639349/work
 notebook_shim @ file:///home/conda/feedstock_root/build_artifacts/notebook-shim_1667478401171/work
 numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1675642663324/work

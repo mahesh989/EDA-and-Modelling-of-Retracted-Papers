@@ -116,3 +116,25 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+
+
+import requests
+import pandas as pd
+
+# Fetch data from OpenAQ API
+url = "https://api.openaq.org/v2/latest"
+response = requests.get(url)
+data = response.json()
+
+# Check if data is not empty
+if data['results']:
+    # Normalize the JSON data
+    normalized_data = pd.json_normalize(data['results'])
+
+    # Save the data to a CSV file
+    normalized_data.to_csv('openaq_data.csv', index=False)
+    print("Data saved to openaq_data.csv")
+else:
+    print("No data found.")
+
